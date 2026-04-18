@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tomauno Model's Timer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;color:#fff;font-family:'Segoe UI',Arial,sans-serif;min-height:100vh}
+:root{--red:#E8001C;--red2:#b8001a}
+.hidden{display:none!important}
+
+.logo-img{width:44px;height:44px;border-radius:50%;background:#000;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-img svg{width:28px;height:28px}
+.logo-txt{font-size:1.3rem;font-weight:700;letter-spacing:1px;line-height:1}
+.logo-txt .uno{color:var(--red)}
+
+/* OVERLAY */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.97);display:flex;align-items:center;justify-content:center;z-index:800;padding:1rem}
+.card{background:#0f0f0f;border:1px solid #1e1e1e;border-radius:18px;padding:2rem;width:min(370px,95vw);text-align:center}
+.card-logo{display:flex;align-items:center;justify-content:center;gap:.7rem;margin-bottom:1.3rem}
+.card h2{font-size:1.1rem;color:#ddd;margin-bottom:.3rem}
+.card p{color:#444;font-size:.85rem;margin-bottom:1.1rem;line-height:1.5}
+.inp{width:100%;padding:.9rem 1rem;background:#000;border:1px solid #252525;border-radius:9px;color:#fff;font-size:1.15rem;outline:none;margin-bottom:.7rem;text-align:center}
+.inp:focus{border-color:var(--red)}
+.btn{width:100%;padding:.9rem;border-radius:9px;border:none;font-size:1rem;font-weight:700;cursor:pointer;transition:.15s;margin-bottom:.4rem}
+.btn-red{background:var(--red);color:#fff}
+.btn-red:hover{background:var(--red2)}
+.btn-ghost{background:transparent;color:#333;border:1px solid #1a1a1a;font-size:.82rem}
+.btn-ghost:hover{color:#666;border-color:#2a2a2a}
+.msg{font-size:.88rem;margin-top:.5rem;padding:.55rem .8rem;border-radius:7px;line-height:1.4}
+.msg-ok{color:#5cb85c;background:#061206}
+.msg-err{color:#ff6b6b;background:#120606}
+
+/* REGISTER VIEW */
+#vReg{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem;position:relative}
+.reg-wrap{background:#0a0a0a;border:1px solid #181818;border-radius:18px;padding:2.2rem;width:min(360px,96vw);text-align:center}
+.reg-big-logo{display:flex;align-items:center;justify-content:center;gap:.8rem;margin-bottom:.3rem}
+.reg-big-logo .logo-img{width:60px;height:60px}
+.reg-big-logo .logo-img svg{width:36px;height:36px}
+.reg-big-logo .logo-txt{font-size:2rem}
+.reg-sub{color:#333;font-size:.82rem;margin-bottom:1.6rem}
+.reg-wrap h2{font-size:1rem;color:#999;margin-bottom:1.1rem;font-weight:400}
+.reg-count{color:#252525;font-size:.78rem;margin-top:1rem}
+.lock-btn{position:fixed;bottom:1.6rem;right:1rem;width:32px;height:32px;border-radius:50%;background:transparent;border:1px solid #0d0d0d;color:#0d0d0d;font-size:.9rem;cursor:pointer;z-index:10;transition:.2s}
+.lock-btn:hover{border-color:#222;color:#333}
+
+/* ADMIN VIEW */
+#vAdmin{min-height:100vh;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:.5rem 1.1rem;border-bottom:1px solid #0d0d0d;background:#030303;flex-shrink:0}
+.topbar-left{display:flex;align-items:center;gap:.6rem}
+.topbar-right{display:flex;gap:.35rem;flex-wrap:wrap}
+.tbtn{padding:.36rem .72rem;border-radius:6px;border:1px solid #181818;background:#060606;color:#444;font-size:.74rem;cursor:pointer;transition:.15s}
+.tbtn:hover{background:#111;color:#ccc}
+.tbtn.danger{border-color:#250000;color:#5a1a1a}
+.tbtn.danger:hover{background:#100000;color:#e44}
+
+.tabs{display:flex;border-bottom:1px solid #0d0d0d;background:#020202;flex-shrink:0}
+.tab{padding:.44rem .95rem;font-size:.78rem;color:#2a2a2a;cursor:pointer;border-bottom:2px solid transparent;transition:.15s}
+.tab.on{color:var(--red);border-bottom-color:var(--red)}
+
+.abody{display:flex;flex:1;overflow:hidden;height:calc(100vh - 80px)}
+
+/* TIMER PANEL */
+.tpanel{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.5rem 1rem;gap:.2rem}
+.t-lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:3px;color:#2a2a2a}
+.t-name{font-size:clamp(2rem,5vw,3.8rem);font-weight:700;color:#fff;text-align:center;min-height:1.15em;padding:0 1rem}
+.t-time{font-size:clamp(9rem,26vw,21rem);font-weight:700;color:var(--red);line-height:.95;font-variant-numeric:tabular-nums;letter-spacing:-4px;text-align:center;transition:color .3s}
+.t-time.warn{color:#ff6600}
+.t-time.hot{animation:blink .55s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
+
+/* SIGUIENTE — grande y visible */
+.next-block{text-align:center;margin-top:.3rem}
+.next-lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:3px;color:#2a2a2a;margin-bottom:.15rem}
+.next-name{font-size:clamp(1.4rem,3.5vw,2.6rem);font-weight:700;color:#555;line-height:1.1}
+
+.ctrls{display:flex;gap:.7rem;margin-top:1rem;flex-wrap:wrap;justify-content:center}
+.cbtn{padding:.8rem 1.6rem;border-radius:10px;border:none;font-size:.92rem;font-weight:700;cursor:pointer;transition:.15s;min-width:115px}
+.cbtn:active{transform:scale(.97)}
+.cbtn-go{background:var(--red);color:#fff}
+.cbtn-go:hover{background:var(--red2)}
+.cbtn-pause{background:#0f0f0f;color:#ccc;border:1px solid #2a2a2a}
+.cbtn-pause:hover{background:#181818}
+.cbtn-next{background:#0a0005;color:#fff;border:1px solid #3a0010}
+.cbtn-next:hover{background:#14000a}
+.cbtn-skip{background:#080808;color:#444;border:1px solid #1a1a1a}
+.cbtn-skip:hover{color:#aaa}
+.t-info{color:#1e1e1e;font-size:.75rem;margin-top:.5rem}
+.no-setup{color:#252525;text-align:center;font-size:.9rem;padding:2rem;line-height:2.4}
+
+/* SIDEBAR */
+.sidebar{width:270px;border-left:1px solid #0a0a0a;background:#020202;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.sb-stats{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:6px;border-bottom:1px solid #0a0a0a;flex-shrink:0}
+.sstat{background:#080808;border-radius:6px;padding:.35rem .5rem;text-align:center}
+.sstat-v{font-size:1.05rem;font-weight:700;color:#fff}
+.sstat-l{font-size:.6rem;color:#333;text-transform:uppercase;letter-spacing:1px}
+.sb-scroll{flex:1;overflow-y:auto;padding:.5rem .6rem}
+.list-hdr{font-size:.6rem;text-transform:uppercase;letter-spacing:2px;color:#252525;margin:.5rem 0 .25rem;display:flex;justify-content:space-between;align-items:center}
+.list-hdr em{color:#333;font-style:normal}
+.mi{display:flex;align-items:center;gap:.35rem;padding:.32rem .45rem;border-radius:5px;margin-bottom:.18rem;font-size:.82rem}
+.mi.pend{color:#aaa;background:#050505}
+.mi.act{background:#140004;color:#fff;border:1px solid #2a0008}
+.mi.done{color:#1e1e1e;text-decoration:line-through}
+.mi.skip{color:#2a2a2a;font-style:italic}
+.mi-n{color:#252525;font-size:.68rem;min-width:14px}
+.mi-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mi-del{background:none;border:none;color:transparent;cursor:pointer;padding:1px 4px;border-radius:3px;font-size:.72rem}
+.mi:hover .mi-del{color:#333}
+.mi-del:hover{color:var(--red)!important}
+.sb-add{display:flex;gap:.35rem;padding:.5rem .6rem;border-top:1px solid #0a0a0a;flex-shrink:0}
+.sb-add input{flex:1;padding:.42rem .55rem;background:#000;border:1px solid #141414;border-radius:5px;color:#fff;font-size:.8rem;outline:none}
+.sb-add input:focus{border-color:var(--red)}
+.sb-add button{padding:.42rem .65rem;background:var(--red);color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:700;font-size:.82rem}
+.sb-add button:hover{background:var(--red2)}
+
+/* SETUP TAB */
+.setup-scroll{flex:1;overflow-y:auto;padding:1.5rem;display:flex;justify-content:center}
+.setup-inner{width:min(500px,100%)}
+.setup-inner h2{font-size:1.1rem;border-bottom:1px solid #0d0d0d;padding-bottom:.7rem;margin-bottom:1.1rem}
+.sf{margin-bottom:.9rem}
+.sf label{display:block;font-size:.78rem;color:#555;margin-bottom:.3rem}
+.sf input{width:100%;padding:.65rem .9rem;background:#080808;border:1px solid #1a1a1a;border-radius:8px;color:#fff;font-size:.95rem;outline:none}
+.sf input:focus{border-color:var(--red)}
+.calc-preview{background:#080808;border:1px solid #111;border-radius:8px;padding:.8rem 1rem;margin:.8rem 0;font-size:.85rem;color:#555;line-height:1.9}
+.calc-preview strong{color:#fff}
+.calc-preview .big-time{color:var(--red);font-size:1.3rem;font-weight:700}
+.setup-btn{width:100%;padding:.85rem;background:var(--red);color:#fff;border:none;border-radius:9px;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:.3rem}
+.setup-btn:hover{background:var(--red2)}
+
+/* QR SECTION */
+.qr-section{margin-top:1.8rem;border-top:1px solid #0d0d0d;padding-top:1.4rem}
+.qr-section h3{font-size:.75rem;text-transform:uppercase;letter-spacing:2px;color:#333;margin-bottom:1rem}
+.qr-big-wrap{display:flex;flex-direction:column;align-items:center;gap:1rem}
+#qr-render{background:#fff;padding:14px;border-radius:12px;display:inline-block}
+.qr-link-box{width:100%;background:#080808;border:1px solid #141414;border-radius:8px;padding:.65rem .9rem;display:flex;gap:.5rem;align-items:center}
+.qr-link-box input{flex:1;background:transparent;border:none;color:#555;font-size:.78rem;outline:none;cursor:pointer}
+.qr-link-box button{padding:.35rem .7rem;background:#1a1a1a;border:none;border-radius:5px;color:#888;font-size:.75rem;cursor:pointer;white-space:nowrap}
+.qr-link-box button:hover{background:#252525;color:#fff}
+.qr-hint{font-size:.75rem;color:#2a2a2a;text-align:center;margin-top:.4rem}
+
+/* NOTIFICATION */
+#notif{position:fixed;top:0;left:0;right:0;background:#000;border-bottom:3px solid var(--red);padding:1.2rem 2rem;text-align:center;z-index:999;transform:translateY(-100%);transition:transform .4s}
+#notif.show{transform:translateY(0)}
+#notif h3{font-size:2rem;color:var(--red);margin-bottom:.2rem}
+#notif p{color:#666;font-size:1rem}
+
+/* CREDIT */
+.credit{position:fixed;bottom:.4rem;left:50%;transform:translateX(-50%);font-size:.58rem;color:#111;white-space:nowrap;z-index:5;letter-spacing:.4px;pointer-events:none;user-select:none}
+</style>
+</head>
+<body>
+
+<svg style="display:none">
+  <symbol id="logo-icon" viewBox="0 0 100 100">
+    <rect width="100" height="100" rx="50" fill="#000"/>
+    <rect x="12" y="12" width="28" height="6" fill="#fff"/>
+    <rect x="12" y="12" width="6" height="28" fill="#fff"/>
+    <rect x="60" y="12" width="28" height="6" fill="#fff"/>
+    <rect x="82" y="12" width="6" height="28" fill="#fff"/>
+    <rect x="12" y="82" width="28" height="6" fill="#fff"/>
+    <rect x="12" y="60" width="6" height="28" fill="#fff"/>
+    <rect x="60" y="82" width="28" height="6" fill="#fff"/>
+    <rect x="82" y="60" width="6" height="28" fill="#fff"/>
+    <rect x="44" y="22" width="12" height="56" fill="#fff"/>
+    <rect x="32" y="44" width="36" height="12" fill="#fff"/>
+  </symbol>
+</svg>
+
+<!-- CREDIT -->
+<div class="credit">© Javier Mottola — Tomauno Model's Timer</div>
+
+<!-- NOTIFICATION -->
+<div id="notif">
+  <h3 id="notif-title">¡Tiempo!</h3>
+  <p id="notif-msg">Cambiá de modelo</p>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="overlay hidden" id="confirmModal">
+  <div class="card">
+    <div class="card-logo">
+      <div class="logo-img"><svg><use href="#logo-icon"/></svg></div>
+      <div class="logo-txt">Toma<span class="uno">uno</span> Model's</div>
+    </div>
+    <h2 id="cm-title">Confirmar</h2>
+    <p id="cm-msg"></p>
+    <button class="btn btn-red" id="cm-ok">Confirmar</button>
+    <button class="btn btn-ghost" id="cm-cancel">Cancelar</button>
+  </div>
+</div>
+
+<!-- ADMIN KEY MODAL -->
+<div class="overlay hidden" id="adminModal">
+  <div class="card">
+    <div class="card-logo">
+      <div class="logo-img"><svg><use href="#logo-icon"/></svg></div>
+      <div class="logo-txt">Toma<span class="uno">uno</span> Model's</div>
+    </div>
+    <h2>Acceso administrador</h2>
+    <p>Ingresá la clave para acceder al panel completo</p>
+    <input class="inp" id="admin-key-inp" type="password" placeholder="• • • •" maxlength="10"/>
+    <button class="btn btn-red" onclick="checkAdminKey()">Ingresar</button>
+    <button class="btn btn-ghost" onclick="closeAdminModal()">Cancelar</button>
+    <div id="admin-key-err" class="msg msg-err hidden">Clave incorrecta</div>
+  </div>
+</div>
+
+<!-- ========== REGISTER VIEW ========== -->
+<div id="vReg" class="hidden">
+  <div class="reg-wrap">
+    <div class="reg-big-logo">
+      <div class="logo-img"><svg><use href="#logo-icon"/></svg></div>
+      <div class="logo-txt">Toma<span class="uno">uno</span> Model's</div>
+    </div>
+    <div class="reg-sub">Registro de modelos</div>
+    <h2>Ingresá tu nombre</h2>
+    <input class="inp" id="reg-inp" type="text" placeholder="Tu nombre..." maxlength="40" autocomplete="off"/>
+    <button class="btn btn-red" onclick="doRegister()">Registrarme</button>
+    <div id="reg-msg" class="msg hidden"></div>
+    <div class="reg-count" id="reg-count"></div>
+  </div>
+  <button class="lock-btn" onclick="openAdminModal()" title="Admin">⚙</button>
+</div>
+
+<!-- ========== ADMIN VIEW ========== -->
+<div id="vAdmin" class="hidden">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logo-img"><svg><use href="#logo-icon"/></svg></div>
+      <div class="logo-txt">Toma<span class="uno">uno</span> Model's
+        <span style="color:#1a1a1a;font-size:.8rem;font-weight:400;margin-left:.4rem">Timer</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="tbtn" onclick="showTab('timer')">Timer</button>
+      <button class="tbtn" onclick="showTab('setup')">Configurar</button>
+      <button class="tbtn danger" onclick="confirmAction('¿Resetear todo? Se borrarán todas las modelos y el timer.',doReset)">Resetear</button>
+      <button class="tbtn" onclick="exitAdmin()">Salir</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab on" id="tab-timer" onclick="showTab('timer')">Timer</div>
+    <div class="tab" id="tab-setup" onclick="showTab('setup')">Configuración / QR</div>
+  </div>
+
+  <div class="abody" id="panel-timer">
+    <!-- TIMER -->
+    <div class="tpanel">
+      <div id="t-nosetup" class="no-setup hidden">
+        Sin modelos aún.<br>
+        Agregá desde el panel lateral<br>
+        o esperá que se registren.<br>
+        <span style="color:#1a1a1a">Luego presioná INICIAR.</span>
+      </div>
+      <div id="t-main" class="hidden" style="width:100%;display:flex;flex-direction:column;align-items:center">
+        <div class="t-lbl">Modelo activa</div>
+        <div class="t-name" id="t-name">—</div>
+        <div class="t-time" id="t-time">00:00</div>
+        <div class="next-block">
+          <div class="next-lbl">A continuación</div>
+          <div class="next-name" id="t-next">—</div>
+        </div>
+        <div class="ctrls">
+          <button class="cbtn cbtn-go" id="cbtn-go" onclick="timerGo()">INICIAR</button>
+          <button class="cbtn cbtn-pause hidden" id="cbtn-pause" onclick="timerPause()">PAUSAR</button>
+          <button class="cbtn cbtn-next hidden" id="cbtn-next" onclick="timerNext()">SIGUIENTE ›</button>
+          <button class="cbtn cbtn-skip hidden" id="cbtn-skip" onclick="timerSkip()">SALTAR</button>
+        </div>
+        <div class="t-info" id="t-info"></div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sb-stats">
+        <div class="sstat"><div class="sstat-v" id="st-total">0</div><div class="sstat-l">Total</div></div>
+        <div class="sstat"><div class="sstat-v" id="st-pend">0</div><div class="sstat-l">Pendientes</div></div>
+        <div class="sstat"><div class="sstat-v" id="st-done">0</div><div class="sstat-l">Pasaron</div></div>
+        <div class="sstat"><div class="sstat-v" id="st-time">—</div><div class="sstat-l">c/modelo</div></div>
+      </div>
+      <div class="sb-scroll" id="sb-list"></div>
+      <div class="sb-add">
+        <input type="text" placeholder="Agregar modelo..." maxlength="40" id="sb-add-inp"
+          onkeydown="if(event.key==='Enter')adminAdd()"/>
+        <button onclick="adminAdd()">+</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETUP TAB -->
+  <div class="setup-scroll hidden" id="panel-setup">
+    <div class="setup-inner">
+      <h2>Configurar sesión</h2>
+      <div class="sf">
+        <label>Hora de finalización de clase</label>
+        <input type="time" id="sf-end" oninput="calcPreview()"/>
+      </div>
+      <div class="sf">
+        <label>Tiempo muerto entre modelos (minutos)</label>
+        <input type="number" id="sf-dead" value="0.5" min="0" max="30" step="0.5" oninput="calcPreview()"/>
+      </div>
+      <div class="calc-preview" id="sf-preview">Ingresá la hora de fin para calcular.</div>
+      <button class="setup-btn" onclick="applySetup()">Aplicar y volver al timer</button>
+
+      <div class="qr-section">
+        <h3>Registro de modelos — QR y link</h3>
+        <div class="qr-big-wrap">
+          <div id="qr-render"></div>
+          <div style="width:100%">
+            <div class="qr-link-box">
+              <input type="text" id="qr-link-inp" readonly onclick="this.select()"/>
+              <button onclick="copyLink(this)">Copiar link</button>
+            </div>
+            <div class="qr-hint">Las modelos escanean el QR o abren el link para registrarse</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var S={models:[],activeIdx:-1,tpm:0,remaining:0,running:false,paused:false,started:false,deadMinutes:.5,isAdmin:false,endTime:''};
+var _iv=null,_poll=null,_confirmCb=null,_qrDone=false;
+
+function init(){
+  loadState();
+  S.isAdmin?showAdmin():showRegister();
+  _poll=setInterval(syncPoll,2500);
+  document.getElementById('admin-key-inp').addEventListener('keydown',function(e){if(e.key==='Enter')checkAdminKey();});
+  document.getElementById('reg-inp').addEventListener('keydown',function(e){if(e.key==='Enter')doRegister();});
+}
+
+/* STORAGE */
+function saveState(){
+  localStorage.setItem('tm3',JSON.stringify(Object.assign({},S,{running:false,paused:false})));
+}
+function loadState(){
+  try{var r=localStorage.getItem('tm3');if(r)S=Object.assign(S,JSON.parse(r),{running:false,paused:false});}catch(e){}
+}
+function syncPoll(){
+  try{
+    var r=localStorage.getItem('tm3');if(!r)return;
+    var sv=JSON.parse(r);
+    if(!sv.models)return;
+    var changed=JSON.stringify(sv.models)!==JSON.stringify(S.models);
+    if(changed){
+      var prevCount=S.models.length;
+      S.models=sv.models;
+      // Auto-recalculate tpm if end time is set and not currently running
+      if(S.endTime&&!S.running){autoCalc();}
+      renderAll();
+    }
+    var rc=document.getElementById('reg-count');
+    if(rc)rc.textContent=S.models.length?S.models.length+' modelo'+(S.models.length>1?'s':'')+' registrada'+(S.models.length>1?'s':''):'';
+  }catch(e){}
+}
+
+/* AUTO RECALC — called whenever models list changes */
+function autoCalc(){
+  if(!S.endTime)return;
+  var parts=S.endTime.split(':');
+  var now=new Date();
+  var end=new Date(now);
+  end.setHours(parseInt(parts[0]),parseInt(parts[1]),0,0);
+  if(end<=now)end.setDate(end.getDate()+1);
+  var totalSec=Math.floor((end-now)/1000);
+  var pend=S.models.filter(function(m){return!m.done&&!m.skipped;});
+  if(!pend.length)return;
+  var deadSec=S.deadMinutes*60*(pend.length-1);
+  var perModel=Math.floor((totalSec-deadSec)/pend.length);
+  if(perModel>0){
+    S.tpm=perModel;
+    if(!S.running)S.remaining=perModel;
+    saveState();
+    renderAll();
+  }
+}
+
+/* VIEWS */
+function showRegister(){S.isAdmin=false;document.getElementById('vReg').classList.remove('hidden');document.getElementById('vAdmin').classList.add('hidden');syncPoll();}
+function showAdmin(){S.isAdmin=true;document.getElementById('vReg').classList.add('hidden');document.getElementById('vAdmin').classList.remove('hidden');renderAll();genQR();saveState();}
+function exitAdmin(){S.isAdmin=false;clearInterval(_iv);S.running=false;saveState();showRegister();}
+
+/* ADMIN KEY */
+function openAdminModal(){document.getElementById('adminModal').classList.remove('hidden');document.getElementById('admin-key-inp').value='';document.getElementById('admin-key-err').classList.add('hidden');setTimeout(function(){document.getElementById('admin-key-inp').focus();},100);}
+function closeAdminModal(){document.getElementById('adminModal').classList.add('hidden');}
+function checkAdminKey(){var v=document.getElementById('admin-key-inp').value.trim();if(v==='3233'){closeAdminModal();showAdmin();}else{document.getElementById('admin-key-err').classList.remove('hidden');document.getElementById('admin-key-inp').value='';}}
+
+/* REGISTER */
+function doRegister(){
+  var inp=document.getElementById('reg-inp');
+  var name=inp.value.trim();if(!name)return;
+  loadState();
+  if(S.models.find(function(m){return m.name.toLowerCase()===name.toLowerCase();})){
+    showRegMsg('Ya hay una modelo con ese nombre. Agregá tu apellido o un apodo.',false);return;
+  }
+  S.models.push({name:name,done:false,skipped:false});
+  saveState();
+  showRegMsg('¡'+name+', quedaste registrada! Esperá las instrucciones.',true);
+  inp.value='';
+  var rc=document.getElementById('reg-count');
+  if(rc)rc.textContent=S.models.length+' modelo'+(S.models.length>1?'s':'')+' registrada'+(S.models.length>1?'s':'');
+}
+function showRegMsg(t,ok){var el=document.getElementById('reg-msg');el.textContent=t;el.className='msg '+(ok?'msg-ok':'msg-err');el.classList.remove('hidden');setTimeout(function(){el.classList.add('hidden');},5000);}
+
+/* SETUP */
+function calcPreview(){
+  var ev=document.getElementById('sf-end').value;
+  var dead=parseFloat(document.getElementById('sf-dead').value)||0;
+  var prev=document.getElementById('sf-preview');
+  if(!ev){prev.innerHTML='Ingresá la hora de fin para calcular.';return;}
+  var now=new Date();var p=ev.split(':');var end=new Date(now);
+  end.setHours(parseInt(p[0]),parseInt(p[1]),0,0);
+  if(end<=now)end.setDate(end.getDate()+1);
+  var totalSec=Math.floor((end-now)/1000);
+  var pend=S.models.filter(function(m){return!m.done&&!m.skipped;}).length||1;
+  var deadSec=dead*60*(pend-1);
+  var per=Math.floor((totalSec-deadSec)/pend);
+  prev.innerHTML='Tiempo total: <strong>'+fmt(totalSec)+'</strong> &nbsp;|&nbsp; Pendientes: <strong>'+pend+'</strong><br>'+
+    'Tiempo muerto total: <strong>'+fmt(Math.max(0,deadSec))+'</strong><br>'+
+    'Tiempo por modelo: <span class="big-time">'+fmt(Math.max(0,per))+'</span>';
+}
+function applySetup(){
+  var ev=document.getElementById('sf-end').value;
+  var dead=parseFloat(document.getElementById('sf-dead').value)||0;
+  if(!ev){alert('Ingresá la hora de fin.');return;}
+  var now=new Date();var p=ev.split(':');var end=new Date(now);
+  end.setHours(parseInt(p[0]),parseInt(p[1]),0,0);
+  if(end<=now)end.setDate(end.getDate()+1);
+  var totalSec=Math.floor((end-now)/1000);
+  var pend=S.models.filter(function(m){return!m.done&&!m.skipped;});
+  if(!pend.length){alert('No hay modelos pendientes.');return;}
+  var deadSec=dead*60*(pend.length-1);
+  var per=Math.floor((totalSec-deadSec)/pend.length);
+  if(per<=0){alert('No hay tiempo suficiente.');return;}
+  S.deadMinutes=dead;S.endTime=ev;S.tpm=per;S.remaining=per;
+  if(S.activeIdx===-1)S.activeIdx=S.models.findIndex(function(m){return!m.done&&!m.skipped;});
+  saveState();renderAll();showTab('timer');
+}
+
+/* QR */
+function genQR(){
+  if(_qrDone)return;
+  var url=location.protocol+'//'+location.host+location.pathname;
+  document.getElementById('qr-link-inp').value=url;
+  var c=document.getElementById('qr-render');c.innerHTML='';
+  try{new QRCode(c,{text:url,width:320,height:320,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});_qrDone=true;}
+  catch(e){c.textContent=url;}
+}
+function copyLink(btn){
+  var v=document.getElementById('qr-link-inp').value;
+  navigator.clipboard.writeText(v).then(function(){btn.textContent='¡Copiado!';setTimeout(function(){btn.textContent='Copiar link';},2000);});
+}
+
+/* TIMER */
+function timerGo(){
+  if(!S.tpm){showTab('setup');return;}
+  if(S.activeIdx===-1)S.activeIdx=S.models.findIndex(function(m){return!m.done&&!m.skipped;});
+  if(S.activeIdx===-1)return;
+  S.remaining=S.tpm;S.running=true;S.paused=false;S.started=true;
+  showBtns(true);clearInterval(_iv);_iv=setInterval(tick,1000);
+  renderAll();saveState();
+}
+function timerPause(){
+  S.paused=!S.paused;S.running=!S.paused;
+  document.getElementById('cbtn-pause').textContent=S.paused?'REANUDAR':'PAUSAR';
+  if(S.running){clearInterval(_iv);_iv=setInterval(tick,1000);}else clearInterval(_iv);
+  saveState();
+}
+function tick(){
+  if(!S.running)return;
+  S.remaining=Math.max(0,S.remaining-1);
+  if(S.remaining===0)timeUp();
+  updateClock();
+}
+function timeUp(){
+  clearInterval(_iv);S.running=false;
+  playBeep();
+  var cur=S.models[S.activeIdx];var nxt=getNextName();
+  showNotif('¡Tiempo! — '+(cur?cur.name:''),'Siguiente: '+(nxt||'Fin de sesión'));
+  saveState();
+}
+function timerNext(){
+  if(S.activeIdx>=0&&S.activeIdx<S.models.length)S.models[S.activeIdx].done=true;
+  clearInterval(_iv);S.running=false;S.paused=false;
+  document.getElementById('cbtn-pause').textContent='PAUSAR';
+  var nx=S.models.findIndex(function(m,i){return i>S.activeIdx&&!m.done&&!m.skipped;});
+  if(nx===-1){var sk=S.models.findIndex(function(m){return m.skipped&&!m.done;});
+    if(sk!==-1){S.activeIdx=sk;S.models[sk].skipped=false;}
+    else{S.activeIdx=-1;sessionEnd();saveState();renderAll();return;}}
+  else S.activeIdx=nx;
+  S.remaining=S.tpm;S.running=true;
+  clearInterval(_iv);_iv=setInterval(tick,1000);
+  hideNotif();saveState();renderAll();
+}
+function timerSkip(){
+  if(S.activeIdx<0)return;
+  S.models[S.activeIdx].skipped=true;
+  clearInterval(_iv);S.running=false;S.paused=false;
+  var nx=S.models.findIndex(function(m,i){return i>S.activeIdx&&!m.done&&!m.skipped;});
+  if(nx===-1){var any=S.models.findIndex(function(m){return!m.done&&!m.skipped;});
+    if(any===-1){sessionEnd();saveState();renderAll();return;}S.activeIdx=any;}
+  else S.activeIdx=nx;
+  S.remaining=S.tpm;S.running=true;
+  clearInterval(_iv);_iv=setInterval(tick,1000);
+  hideNotif();saveState();renderAll();
+}
+function sessionEnd(){
+  showNotif('¡Sesión finalizada!','Todas las modelos pasaron.');
+  showBtns(false);S.started=false;
+}
+function showBtns(active){
+  document.getElementById('cbtn-go').classList.toggle('hidden',active);
+  document.getElementById('cbtn-pause').classList.toggle('hidden',!active);
+  document.getElementById('cbtn-next').classList.toggle('hidden',!active);
+  document.getElementById('cbtn-skip').classList.toggle('hidden',!active);
+}
+
+/* RENDER */
+function renderAll(){
+  var noM=S.models.length===0;
+  document.getElementById('t-nosetup').classList.toggle('hidden',!noM);
+  document.getElementById('t-main').classList.toggle('hidden',noM);
+  if(!noM){
+    var act=S.activeIdx>=0&&S.activeIdx<S.models.length?S.models[S.activeIdx]:null;
+    document.getElementById('t-name').textContent=act?act.name:'—';
+    document.getElementById('t-next').textContent=getNextName()||'Fin de sesión';
+    if(!S.started)showBtns(false);
+    document.getElementById('t-info').textContent=S.tpm?'Tiempo por modelo: '+fmt(S.tpm):'Sin configurar — andá a "Configurar"';
+  }
+  var done=S.models.filter(function(m){return m.done;}).length;
+  var pend=S.models.filter(function(m){return!m.done&&!m.skipped;}).length;
+  document.getElementById('st-total').textContent=S.models.length;
+  document.getElementById('st-pend').textContent=pend;
+  document.getElementById('st-done').textContent=done;
+  document.getElementById('st-time').textContent=S.tpm?fmt(S.tpm):'—';
+  updateClock();renderSidebar();
+}
+function updateClock(){
+  var el=document.getElementById('t-time');if(!el)return;
+  el.textContent=fmt(S.remaining);
+  el.classList.remove('warn','hot');
+  if(S.remaining>0&&S.remaining<=20)el.classList.add('hot');
+  else if(S.remaining>0&&S.remaining<=60)el.classList.add('warn');
+}
+function renderSidebar(){
+  var pend=S.models.filter(function(m){return!m.done;});
+  var done=S.models.filter(function(m){return m.done;});
+  var h='';
+  h+='<div class="list-hdr">Falta pasar <em>'+pend.length+'</em></div>';
+  pend.forEach(function(m){
+    var ri=S.models.indexOf(m);
+    var cls=ri===S.activeIdx?'act':(m.skipped?'skip':'pend');
+    h+='<div class="mi '+cls+'"><span class="mi-n">'+(ri+1)+'</span><span class="mi-name">'+esc(m.name)+(m.skipped?' ⏭':'')+'</span><button class="mi-del" onclick="delModel('+ri+')">✕</button></div>';
+  });
+  h+='<div class="list-hdr" style="margin-top:.6rem">Ya pasaron <em>'+done.length+'</em></div>';
+  done.forEach(function(m){h+='<div class="mi done"><span class="mi-n">✓</span><span class="mi-name">'+esc(m.name)+'</span></div>';});
+  document.getElementById('sb-list').innerHTML=h;
+}
+function getNextName(){
+  var i=S.models.findIndex(function(m,idx){return idx>S.activeIdx&&!m.done&&!m.skipped;});
+  if(i!==-1)return S.models[i].name;
+  var sk=S.models.find(function(m){return m.skipped&&!m.done;});
+  return sk?sk.name+' (saltada)':null;
+}
+
+/* ADMIN ACTIONS */
+function adminAdd(){
+  var inp=document.getElementById('sb-add-inp');var name=inp.value.trim();if(!name)return;
+  if(S.models.find(function(m){return m.name.toLowerCase()===name.toLowerCase();})){alert('Ya existe una modelo con ese nombre.');return;}
+  S.models.push({name:name,done:false,skipped:false});
+  inp.value='';
+  // Auto-recalculate
+  if(S.endTime&&!S.running)autoCalc();
+  saveState();renderAll();
+}
+function delModel(idx){
+  confirmAction('¿Eliminar a '+S.models[idx].name+'?',function(){
+    if(idx===S.activeIdx){clearInterval(_iv);S.running=false;S.started=false;}
+    S.models.splice(idx,1);
+    if(S.activeIdx>=S.models.length)S.activeIdx=S.models.length-1;
+    if(S.endTime&&!S.running)autoCalc();
+    saveState();renderAll();
+  });
+}
+function doReset(){
+  clearInterval(_iv);
+  S={models:[],activeIdx:-1,tpm:0,remaining:0,running:false,paused:false,started:false,deadMinutes:.5,isAdmin:true,endTime:''};
+  localStorage.removeItem('tm3');renderAll();
+}
+
+/* TABS */
+function showTab(t){
+  var isT=t==='timer';
+  document.getElementById('panel-timer').classList.toggle('hidden',!isT);
+  document.getElementById('panel-setup').classList.toggle('hidden',isT);
+  document.getElementById('tab-timer').classList.toggle('on',isT);
+  document.getElementById('tab-setup').classList.toggle('on',!isT);
+  if(!isT){calcPreview();genQR();}
+}
+
+/* NOTIFICATIONS */
+function showNotif(title,msg){document.getElementById('notif-title').textContent=title;document.getElementById('notif-msg').textContent=msg;document.getElementById('notif').classList.add('show');setTimeout(hideNotif,7000);}
+function hideNotif(){document.getElementById('notif').classList.remove('show');}
+
+/* CONFIRM */
+function confirmAction(msg,cb){_confirmCb=cb;document.getElementById('cm-msg').textContent=msg;document.getElementById('confirmModal').classList.remove('hidden');}
+document.getElementById('cm-ok').onclick=function(){document.getElementById('confirmModal').classList.add('hidden');if(_confirmCb){_confirmCb();_confirmCb=null;}};
+document.getElementById('cm-cancel').onclick=function(){document.getElementById('confirmModal').classList.add('hidden');_confirmCb=null;};
+
+/* SOUND */
+function playBeep(){
+  try{var ctx=new(window.AudioContext||window.webkitAudioContext)();
+  [0,.38,.76].forEach(function(t){var o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(.7,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+t+.32);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.34);});}catch(e){}
+}
+
+/* UTILS */
+function fmt(s){s=Math.max(0,Math.round(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* KEYBOARD */
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT')return;
+  if(e.code==='Space'){e.preventDefault();S.running||S.paused?timerPause():timerGo();}
+  if(e.code==='ArrowRight'&&S.started)timerNext();
+});
+
+init();
+</script>
+</body>
+</html>
