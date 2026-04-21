@@ -11,8 +11,8 @@ body{background:#000;color:#fff;font-family:'Segoe UI',Arial,sans-serif;min-heig
 :root{--red:#E8001C;--red2:#b8001a;--gold:#f0c040}
 .hidden{display:none!important}
 
-.logo-img{width:44px;height:44px;border-radius:50%;overflow:hidden;flex-shrink:0;background:#000;border:1.5px solid #fff;display:flex;align-items:center;justify-content:center}
-.logo-img svg{width:28px;height:28px}
+.logo-img{width:44px;height:44px;border-radius:50%;overflow:hidden;flex-shrink:0;background:#000;display:flex;align-items:center;justify-content:center}
+.logo-img svg{width:100%;height:100%;display:block}
 .logo-img img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .logo-txt{font-size:1.3rem;font-weight:700;letter-spacing:1px;line-height:1}
 .logo-txt .uno{color:var(--red)}
@@ -195,25 +195,28 @@ body{background:#000;color:#fff;font-family:'Segoe UI',Arial,sans-serif;min-heig
 <body>
 <svg style="display:none">
   <symbol id="logo-icon" viewBox="0 0 100 100">
-    <rect width="100" height="100" rx="50" fill="#000"/>
-    <rect x="12" y="12" width="28" height="6" fill="#fff"/>
-    <rect x="12" y="12" width="6" height="28" fill="#fff"/>
-    <rect x="60" y="12" width="28" height="6" fill="#fff"/>
-    <rect x="82" y="12" width="6" height="28" fill="#fff"/>
-    <rect x="12" y="82" width="28" height="6" fill="#fff"/>
-    <rect x="12" y="60" width="6" height="28" fill="#fff"/>
-    <rect x="60" y="82" width="28" height="6" fill="#fff"/>
-    <rect x="82" y="60" width="6" height="28" fill="#fff"/>
-    <rect x="44" y="22" width="12" height="56" fill="#fff"/>
-    <rect x="32" y="44" width="36" height="12" fill="#fff"/>
+    <circle cx="50" cy="50" r="50" fill="#000"/>
+
+    <!-- Top-left L bracket — thick, touching near circle edge -->
+    <polyline points="20,38 20,20 38,20" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="butt" stroke-linejoin="miter"/>
+    <!-- Top-right L bracket -->
+    <polyline points="62,20 80,20 80,38" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="butt" stroke-linejoin="miter"/>
+    <!-- Bottom-left L bracket -->
+    <polyline points="20,62 20,80 38,80" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="butt" stroke-linejoin="miter"/>
+    <!-- Bottom-right L bracket -->
+    <polyline points="80,62 80,80 62,80" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="butt" stroke-linejoin="miter"/>
+    <!-- "1" white bold centered -->
+    <text x="51" y="67" text-anchor="middle" font-family="Arial Black,Impact,sans-serif" font-size="42" font-weight="900" fill="#fff">1</text>
   </symbol>
 </svg>
 
 <!-- CREDIT -->
-<div class="credit" onclick="openContact()">
-  <span>® Javier Móttola</span>
-  <span style="color:#1a1a1a">·</span>
-  <span style="color:#0d0d0d">Tomauno Model's Timer</span>
+<div style="position:fixed;bottom:.5rem;left:50%;transform:translateX(-50%);white-space:nowrap;z-index:5;font-size:.62rem;color:#444;display:flex;gap:.6rem;align-items:center">
+  <span style="color:#555">® Javier Móttola</span>
+  <span style="color:#2a2a2a">|</span>
+  <a href="https://wa.me/5493764354522" target="_blank" style="color:#3a7a3a;text-decoration:none">WhatsApp</a>
+  <span style="color:#2a2a2a">|</span>
+  <a href="https://instagram.com/tomaunomodels" target="_blank" style="color:#6a3a6a;text-decoration:none">@tomaunomodels</a>
 </div>
 
 <!-- CONTACT MODAL -->
@@ -293,7 +296,6 @@ body{background:#000;color:#fff;font-family:'Segoe UI',Arial,sans-serif;min-heig
       <div class="logo-txt">Toma<span class="uno">uno</span> Model's</div>
     </div>
     <div class="reg-sub">Registro de participantes</div>
-    <h2>Ingresá tu nombre</h2>
     <input class="inp" id="reg-inp" type="text" placeholder="Tu nombre..." maxlength="40" autocomplete="off"/>
     <button class="btn btn-red" onclick="doRegister()">Registrarme</button>
     <div id="reg-msg" class="msg hidden"></div>
@@ -308,7 +310,6 @@ body{background:#000;color:#fff;font-family:'Segoe UI',Arial,sans-serif;min-heig
     <div class="topbar-left">
       <div class="logo-img" id="top-logo-img"><svg><use href="#logo-icon"/></svg></div>
       <div class="logo-txt">Toma<span class="uno">uno</span> Model's</div>
-      <span class="conn-dot" id="conn-dot"></span>
     </div>
     <div class="topbar-right">
       <button class="tbtn" onclick="showTab('timer')">Timer</button>
@@ -318,10 +319,7 @@ body{background:#000;color:#fff;font-family:'Segoe UI',Arial,sans-serif;min-heig
       <button class="tbtn" onclick="exitAdmin()">Salir</button>
     </div>
   </div>
-  <div class="tabs">
-    <div class="tab on" id="tab-timer" onclick="showTab('timer')">Timer</div>
-    <div class="tab" id="tab-setup" onclick="showTab('setup')">Configuración / QR</div>
-  </div>
+  <div class="tabs" style="display:none"></div>
 
   <div class="abody" id="panel-timer">
     <div class="tpanel">
@@ -382,7 +380,7 @@ body{background:#000;color:#fff;font-family:'Segoe UI',Arial,sans-serif;min-heig
       <button class="setup-btn" onclick="applySetup()">Aplicar y volver al timer</button>
       <h3>Carga masiva de nombres</h3>
       <p style="color:#444;font-size:.82rem;margin-bottom:.6rem;line-height:1.6">Pegá una lista de nombres (uno por línea) y se agregan todos de una vez.</p>
-      <div class="sf"><textarea id="bulk-names" placeholder="Ana García&#10;Carlos López&#10;María Fernández&#10;..."></textarea></div>
+      <div class="sf"><textarea id="bulk-names" placeholder="Un nombre por línea..."></textarea></div>
       <button class="setup-btn-sec" onclick="doBulkAdd()">Cargar todos los nombres</button>
       <h3>Sesiones guardadas</h3>
       <div class="sess-list" id="sess-list"></div>
@@ -492,8 +490,13 @@ function autoCalc(){
   var deadSec=S.deadMinutes*60*(pend.length-1),per=Math.floor((totalSec-deadSec)/pend.length);
   if(per>0){
     S.tpm=per;
-    // Only update remaining if not currently running
-    if(!S.running)S.remaining=per;
+    // If running, adjust remaining proportionally but don't exceed new tpm
+    if(S.running){
+      var ratio=S.remaining/Math.max(1,S.tpm||per);
+      S.remaining=Math.round(per*Math.min(ratio,1));
+    } else {
+      S.remaining=per;
+    }
     fbSaveSession();
     renderAll();
   }
@@ -519,8 +522,10 @@ window.uploadLogo=inp=>{
   r.readAsDataURL(file);
 };
 function applyLogo(src){
+  var imgTag='<img src="'+src+'" alt="logo" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>';
   ['top-logo-img','reg-logo-img','ak-logo','cm-logo','logo-preview-box'].forEach(id=>{
-    var el=document.getElementById(id);if(el)el.innerHTML='<img src="'+src+'" alt="logo"/>';
+    var el=document.getElementById(id);
+    if(el){el.innerHTML=imgTag;}
   });
 }
 
@@ -555,14 +560,14 @@ window.calcPreview=()=>{
 };
 window.applySetup=()=>{
   var ev=document.getElementById('sf-end').value,dead=parseFloat(document.getElementById('sf-dead').value)||0;
-  if(!ev){alert('Ingresá la hora de fin.');return;}
+  if(!ev){showAlert('Ingresá la hora de fin.');return;}
   var now=new Date(),p=ev.split(':'),end=new Date(now);
   end.setHours(parseInt(p[0]),parseInt(p[1]),0,0);if(end<=now)end.setDate(end.getDate()+1);
   var totalSec=Math.floor((end-now)/1000);
   var pend=S.models.filter(m=>!m.done&&!m.skipped);
-  if(!pend.length){alert('No hay participantes pendientes.');return;}
+  if(!pend.length){showAlert('No hay participantes pendientes.');return;}
   var deadSec=dead*60*(pend.length-1),per=Math.floor((totalSec-deadSec)/pend.length);
-  if(per<=0){alert('No hay tiempo suficiente.');return;}
+  if(per<=0){showAlert('No hay tiempo suficiente.');return;}
   S.deadMinutes=dead;S.endTime=ev;S.tpm=per;S.remaining=per;S.freeMode=false;
   if(S.activeIdx===-1)S.activeIdx=S.models.findIndex(m=>!m.done&&!m.skipped);
   fbSaveSession();renderAll();showTab('timer');
@@ -572,12 +577,12 @@ window.applyFreeMode=()=>{S.freeMode=true;S.tpm=0;S.remaining=0;S.endTime='';if(
 // BULK ADD
 window.doBulkAdd=async()=>{
   var raw=document.getElementById('bulk-names').value.trim();
-  if(!raw){alert('Ingresá al menos un nombre.');return;}
+  if(!raw){showAlert('Ingresá al menos un nombre.');return;}
   var names=raw.split('\n').map(n=>n.trim()).filter(n=>n.length>0);
   var added=0,skipped=0;
   for(var n of names){if(S.models.find(m=>m.name.toLowerCase()===n.toLowerCase())){skipped++;continue;}await fbAdd(n);added++;}
   document.getElementById('bulk-names').value='';
-  alert('✓ '+added+' participante'+(added!==1?'s':'')+' agregado'+(added!==1?'s':'')+(skipped?'. '+skipped+' omitido'+(skipped!==1?'s':'')+' (ya existían)':'')+'.');
+  showAlert('✓ '+added+' participante'+(added!==1?'s':'')+' agregado'+(added!==1?'s':'')+(skipped?'. '+skipped+' omitido'+(skipped!==1?'s':'')+' (ya existían)':'')+'.');
 };
 
 // SESSION SAVE/LOAD
@@ -831,7 +836,7 @@ window.dndEnd=()=>{document.querySelectorAll('.mi').forEach(el=>el.classList.rem
 // ADMIN
 window.adminAdd=async()=>{
   var inp=document.getElementById('sb-add-inp'),name=inp.value.trim();if(!name)return;
-  if(S.models.find(m=>m.name.toLowerCase()===name.toLowerCase())){alert('Ya existe alguien con ese nombre.');return;}
+  if(S.models.find(m=>m.name.toLowerCase()===name.toLowerCase())){showAlert('Ya existe alguien con ese nombre.');return;}
   await fbAdd(name);inp.value='';
   // Recalculate after adding
   if(!S.freeMode&&S.endTime&&!S.running)autoCalc();
@@ -851,7 +856,8 @@ window.doReset=async()=>{
   await fbResetAll();renderAll();
 };
 
-// TABS
+window.confirmAction=(msg,cb)=>{_confirmCb=cb;document.getElementById('cm-msg').textContent=msg;document.getElementById('cm-cancel').classList.remove('hidden');document.getElementById('confirmModal').classList.remove('hidden');};
+window.showAlert=showAlert;
 window.showTab=t=>{
   var isT=t==='timer';
   document.getElementById('panel-timer').classList.toggle('hidden',!isT);
@@ -866,8 +872,8 @@ function showNotif(t,m){document.getElementById('notif-title').textContent=t;doc
 function hideNotif(){document.getElementById('notif').classList.remove('show');}
 
 // CONFIRM
-window.confirmAction=(msg,cb)=>{_confirmCb=cb;document.getElementById('cm-msg').textContent=msg;document.getElementById('confirmModal').classList.remove('hidden');};
-document.getElementById('cm-ok').onclick=()=>{document.getElementById('confirmModal').classList.add('hidden');if(_confirmCb){_confirmCb();_confirmCb=null;}};
+function showAlert(msg){_confirmCb=null;document.getElementById('cm-msg').textContent=msg;document.getElementById('cm-ok').textContent='Aceptar';document.getElementById('cm-cancel').classList.add('hidden');document.getElementById('confirmModal').classList.remove('hidden');}
+document.getElementById('cm-ok').onclick=()=>{document.getElementById('confirmModal').classList.add('hidden');document.getElementById('cm-ok').textContent='Confirmar';document.getElementById('cm-cancel').classList.remove('hidden');if(_confirmCb){_confirmCb();_confirmCb=null;}};
 document.getElementById('cm-cancel').onclick=()=>{document.getElementById('confirmModal').classList.add('hidden');_confirmCb=null;};
 
 // SOUND
